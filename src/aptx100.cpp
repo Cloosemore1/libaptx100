@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cstdint>
 
+static_assert(sizeof(int) == 4);
+
 auto pcmClipValue = [](auto v) {
   if (v >= -32768) {
     if (v > 32767) {

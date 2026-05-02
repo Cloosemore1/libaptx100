@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -I$(IDIR) -fPIC
+CFLAGS = -I$(IDIR) -fPIC -frounding-math -fno-associative-math -fsanitize=undefined
 IDIR = ./include
 
 _DEPS = aptx100.h defs.h libaptx100.h
