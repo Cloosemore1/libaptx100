@@ -583,11 +583,15 @@ void std_aptxChannelDecode(aptxChannel_t* aptxChannel, int pcm4[4], unsigned sho
 
 void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   double qmf34A[2], qmf34B[2];
-  printf("qmf32idx: %d", aptxChannel->qmf32idx);
   aptxChannel->qmf32B[aptxChannel->qmf32idx + 0] = (float)pcmClipValue(pcm4[0] + pcm4[1]);
   aptxChannel->qmf32B[aptxChannel->qmf32idx + 1] = (float)pcmClipValue(pcm4[0] - pcm4[1]);
   aptxChannel->qmf32A[aptxChannel->qmf32idx + 0] = (float)pcmClipValue(pcm4[2] + pcm4[3]);
   aptxChannel->qmf32A[aptxChannel->qmf32idx + 1] = (float)pcmClipValue(pcm4[2] - pcm4[3]);
+  printf("qmf32b: %lf\n", aptxChannel->qmf32B[aptxChannel->qmf32idx + 0]);
+  printf("qmf32b: %lf\n", aptxChannel->qmf32B[aptxChannel->qmf32idx + 1]);
+  printf("qmf32a: %lf\n", aptxChannel->qmf32A[aptxChannel->qmf32idx + 0]);
+  printf("qmf32a: %lf\n", aptxChannel->qmf32A[aptxChannel->qmf32idx + 1]);
+
   aptxChannel->qmf32idx += 2;
   if (aptxChannel->qmf32idx >= 32) {
     aptxChannel->qmf32idx = 0;
