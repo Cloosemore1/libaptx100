@@ -17,6 +17,7 @@ auto pcmClipValue = [](auto v) {
   else {
     v = -32768;
   }
+  printf("PCM clip value: %d\n", v);
   return v;
 };
 
@@ -587,10 +588,10 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   aptxChannel->qmf32B[aptxChannel->qmf32idx + 1] = (float)pcmClipValue(pcm4[0] - pcm4[1]);
   aptxChannel->qmf32A[aptxChannel->qmf32idx + 0] = (float)pcmClipValue(pcm4[2] + pcm4[3]);
   aptxChannel->qmf32A[aptxChannel->qmf32idx + 1] = (float)pcmClipValue(pcm4[2] - pcm4[3]);
-  printf("qmf32b: %lf\n", aptxChannel->qmf32B[aptxChannel->qmf32idx + 0]);
-  printf("qmf32b: %lf\n", aptxChannel->qmf32B[aptxChannel->qmf32idx + 1]);
-  printf("qmf32a: %lf\n", aptxChannel->qmf32A[aptxChannel->qmf32idx + 0]);
-  printf("qmf32a: %lf\n", aptxChannel->qmf32A[aptxChannel->qmf32idx + 1]);
+  // printf("qmf32b: %lf\n", aptxChannel->qmf32B[aptxChannel->qmf32idx + 0]);
+  // printf("qmf32b: %lf\n", aptxChannel->qmf32B[aptxChannel->qmf32idx + 1]);
+  // printf("qmf32a: %lf\n", aptxChannel->qmf32A[aptxChannel->qmf32idx + 0]);
+  // printf("qmf32a: %lf\n", aptxChannel->qmf32A[aptxChannel->qmf32idx + 1]);
 
   aptxChannel->qmf32idx += 2;
   if (aptxChannel->qmf32idx >= 32) {
