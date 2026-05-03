@@ -592,18 +592,18 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   }
   double v;
   v = aptxQMF32(&QMF32_FLT[32 + 0 - aptxChannel->qmf32idx], &aptxChannel->qmf32B[0]);
+  printf("v: %lf\n", v);
   pcm4[0] = aptxDoubleToIntStd(2 * v);
   v = aptxQMF32(&QMF32_FLT[32 + 1 - aptxChannel->qmf32idx], &aptxChannel->qmf32B[1]);
+  printf("v: %lf\n", v);
   pcm4[1] = aptxDoubleToIntStd(2 * v);
   v = aptxQMF32(&QMF32_FLT[32 + 0 - aptxChannel->qmf32idx], &aptxChannel->qmf32A[0]);
+  printf("v: %lf\n", v);
   pcm4[2] = aptxDoubleToIntStd(2 * v);
   v = aptxQMF32(&QMF32_FLT[32 + 1 - aptxChannel->qmf32idx], &aptxChannel->qmf32A[1]);
+  printf("v: %lf\n", v);
   pcm4[3] = aptxDoubleToIntStd(2 * v);
 
-  for (int i = 0; i < 4; i++) {
-    printf("PCM value %d between QMF32 and QMF34: %d\n", i, pcm4[i]);
-  }
-  
   aptxChannel->qmf34A[aptxChannel->qmf34idx + 0] = (float)pcmClipValue(pcm4[1] + pcm4[3]);
   aptxChannel->qmf34B[aptxChannel->qmf34idx + 0] = (float)pcmClipValue(pcm4[1] - pcm4[3]);
   aptxChannel->qmf34A[aptxChannel->qmf34idx + 1] = (float)pcmClipValue(pcm4[0] + pcm4[2]);
