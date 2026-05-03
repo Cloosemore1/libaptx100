@@ -577,9 +577,6 @@ void std_aptxChannelDecode(aptxChannel_t* aptxChannel, int pcm4[4], unsigned sho
   pcm4[1] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[1], ((aptxVal >> 7) & 0xF) >> bitcorr_ch1, 4 - bitcorr_ch1, 3328, 1, 2);
   pcm4[2] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[2], (aptxVal >> 11) & 3, 2, 3584, 0, 1);
   pcm4[3] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[3], ((aptxVal >> 13) & 7) >> bitcorr_ch3, 3 - bitcorr_ch3, 3584, 0, 2);
-  for (int i = 0; i < 4; i++) {
-    printf("pcm value %d before QMF: %d\n", i, pcm4[i]);
-  }
   std_dec_aptxQMF(aptxChannel, pcm4);
 }
 
@@ -612,6 +609,10 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   }
   aptxQMF34(qmf34A, &QMF34_FLT_0[34 - 2 - aptxChannel->qmf34idx], aptxChannel->qmf34A);
   aptxQMF34(qmf34B, &QMF34_FLT_1[34 - 2 - aptxChannel->qmf34idx], aptxChannel->qmf34B);
+  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34B[0]);
+  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34A[0]);
+  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34B[1]);
+  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34A[1]);
   pcm4[0] = aptxDoubleToIntStd(2 * qmf34B[0]);
   pcm4[1] = aptxDoubleToIntStd(2 * qmf34A[0]);
   pcm4[2] = aptxDoubleToIntStd(2 * qmf34B[1]);
