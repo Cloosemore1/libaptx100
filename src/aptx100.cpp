@@ -17,7 +17,7 @@ auto pcmClipValue = [](auto v) {
   else {
     v = -32768;
   }
-  printf("PCM clip value: %d\n", v);
+  //printf("PCM clip value: %d\n", v);
   return v;
 };
 
