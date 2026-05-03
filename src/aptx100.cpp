@@ -586,6 +586,10 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   aptxChannel->qmf32B[aptxChannel->qmf32idx + 1] = (float)pcmClipValue(pcm4[0] - pcm4[1]);
   aptxChannel->qmf32A[aptxChannel->qmf32idx + 0] = (float)pcmClipValue(pcm4[2] + pcm4[3]);
   aptxChannel->qmf32A[aptxChannel->qmf32idx + 1] = (float)pcmClipValue(pcm4[2] - pcm4[3]);
+  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34B[0]);
+  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34A[0]);
+  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34B[1]);
+  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34A[1]);
   aptxChannel->qmf32idx += 2;
   if (aptxChannel->qmf32idx >= 32) {
     aptxChannel->qmf32idx = 0;
@@ -609,10 +613,6 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   }
   aptxQMF34(qmf34A, &QMF34_FLT_0[34 - 2 - aptxChannel->qmf34idx], aptxChannel->qmf34A);
   aptxQMF34(qmf34B, &QMF34_FLT_1[34 - 2 - aptxChannel->qmf34idx], aptxChannel->qmf34B);
-  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34B[0]);
-  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34A[0]);
-  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34B[1]);
-  printf("value 0 before aptxDoubleToIntStd: %lf\n", qmf34A[1]);
   pcm4[0] = aptxDoubleToIntStd(2 * qmf34B[0]);
   pcm4[1] = aptxDoubleToIntStd(2 * qmf34A[0]);
   pcm4[2] = aptxDoubleToIntStd(2 * qmf34B[1]);
