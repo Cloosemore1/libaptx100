@@ -584,6 +584,9 @@ void std_aptxChannelDecode(aptxChannel_t* aptxChannel, int pcm4[4], unsigned sho
 
 void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   double qmf34A[2], qmf34B[2];
+  for (int i = 0; i < 4; i++) {
+    printf("pcm4[%d]: %d\n", i, pcm4[i]);
+  }
   aptxChannel->qmf32B[aptxChannel->qmf32idx + 0] = (float)pcmClipValue(pcm4[0] + pcm4[1]);
   aptxChannel->qmf32B[aptxChannel->qmf32idx + 1] = (float)pcmClipValue(pcm4[0] - pcm4[1]);
   aptxChannel->qmf32A[aptxChannel->qmf32idx + 0] = (float)pcmClipValue(pcm4[2] + pcm4[3]);
