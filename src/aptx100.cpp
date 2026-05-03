@@ -334,6 +334,8 @@ void std_encdec_10002A1F(int pcm2[2], aptxQuantizer_t* aptxQuantizer, int window
     aptxQuantizer->m_10[i + 24] = aptxQuantizer->m_10[i + 24 - 1];
   }
   pcm2[1] = pcmClipValue(pcmVal + pcm2[0]);
+  printf("pcm2[0] from std_encdec+10002A1F: %d\n", pcm2[0]);
+  printf("pcm2[0] from std_encdec+10002A1F: %d\n", pcm2[0]);
 }
 
 void std_encdec_10002C26(int pcmVal, int pcm2[2], aptxQuantizer_t* aptxQuantizer, int windowLength) {
@@ -573,8 +575,6 @@ int aptxDec(aptxCtx_t* aptxCtx, int samples, short* pcmBuf, unsigned short* aptx
 }
 
 void std_aptxChannelDecode(aptxChannel_t* aptxChannel, int pcm4[4], unsigned short aptxVal, int bitcorr_ch1, int bitcorr_ch3) { 
-  //printf("bitcorr_ch1: %d bitcorr_ch3: %d\n", bitcorr_ch1, bitcorr_ch3);
-  //printf("aptxVal at first decode step: %x\n", aptxVal);
   pcm4[0] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[0], aptxVal & 0x7F, 7, 2816, 1, 4);
   pcm4[1] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[1], ((aptxVal >> 7) & 0xF) >> bitcorr_ch1, 4 - bitcorr_ch1, 3328, 1, 2);
   pcm4[2] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[2], (aptxVal >> 11) & 3, 2, 3584, 0, 1);
