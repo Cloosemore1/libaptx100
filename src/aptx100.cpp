@@ -239,7 +239,7 @@ void aptxQMF34(double dst[2], float flt[34], float src[34]) {
 double aptxQMF32(float flt[32], float src[32]) {
   double dst{ 0.0 };
   for (auto i = 0; i < 32; i += 2) {
-    printf("flt: %lf, src: %lf\n", flt[30 - i], src[30 - i]);
+    //printf("flt: %lf, src: %lf\n", flt[30 - i], src[30 - i]);
     dst += flt[30 - i] * src[30 - i];
   }
   return dst;
@@ -583,6 +583,7 @@ void std_aptxChannelDecode(aptxChannel_t* aptxChannel, int pcm4[4], unsigned sho
 
 void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   double qmf34A[2], qmf34B[2];
+  printf("qmf32idx: %d", aptxChannel->qmf32idx);
   aptxChannel->qmf32B[aptxChannel->qmf32idx + 0] = (float)pcmClipValue(pcm4[0] + pcm4[1]);
   aptxChannel->qmf32B[aptxChannel->qmf32idx + 1] = (float)pcmClipValue(pcm4[0] - pcm4[1]);
   aptxChannel->qmf32A[aptxChannel->qmf32idx + 0] = (float)pcmClipValue(pcm4[2] + pcm4[3]);
