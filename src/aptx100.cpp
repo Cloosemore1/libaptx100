@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdint>
+#include <cstdio>
 
 static_assert(sizeof(int) == 4);
 
@@ -570,6 +571,8 @@ int aptxDec(aptxCtx_t* aptxCtx, int samples, short* pcmBuf, unsigned short* aptx
 }
 
 void std_aptxChannelDecode(aptxChannel_t* aptxChannel, int pcm4[4], unsigned short aptxVal, int bitcorr_ch1, int bitcorr_ch3) { 
+  //printf("bitcorr_ch1: %d bitcorr_ch3: %d\n", bitcorr_ch1, bitcorr_ch3);
+  printf("aptxVal at first decode step: %x\n", aptxVal);
   pcm4[0] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[0], aptxVal & 0x7F, 7, 2816, 1, 4);
   pcm4[1] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[1], ((aptxVal >> 7) & 0xF) >> bitcorr_ch1, 4 - bitcorr_ch1, 3328, 1, 2);
   pcm4[2] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[2], (aptxVal >> 11) & 3, 2, 3584, 0, 1);
@@ -613,6 +616,7 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
 }
 
 int std_dec_aptxQuantizeBank(aptxQuantizer_t* aptxQuantizer, int aptxVal, int allocBits, int maxScale, int outShift, int windowLength) {
+  printf("subband value: %x\n", aptxVal);
   auto v = std_encdec_100028F1(aptxQuantizer->scale2, &QTZ_TABLE[allocBits], aptxVal, maxScale, outShift);
   v = pcmClipValue(v);
   std_encdec_10002A1F(aptxQuantizer->pcm2, aptxQuantizer, windowLength);
