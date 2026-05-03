@@ -578,7 +578,7 @@ void std_aptxChannelDecode(aptxChannel_t* aptxChannel, int pcm4[4], unsigned sho
   pcm4[2] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[2], (aptxVal >> 11) & 3, 2, 3584, 0, 1);
   pcm4[3] = std_dec_aptxQuantizeBank(&aptxChannel->quantizer[3], ((aptxVal >> 13) & 7) >> bitcorr_ch3, 3 - bitcorr_ch3, 3584, 0, 2);
   for (int i = 0; i < 4; i++) {
-    printf("pcm value %d before QMF: %d", i, pcm4[i]);
+    printf("pcm value %d before QMF: %d\n", i, pcm4[i]);
   }
   std_dec_aptxQMF(aptxChannel, pcm4);
 }
