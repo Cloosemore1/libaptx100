@@ -622,10 +622,10 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
 int std_dec_aptxQuantizeBank(aptxQuantizer_t* aptxQuantizer, int aptxVal, int allocBits, int maxScale, int outShift, int windowLength) {
   //printf("subband value: %x\n", aptxVal);
   auto v = std_encdec_100028F1(aptxQuantizer->scale2, &QTZ_TABLE[allocBits], aptxVal, maxScale, outShift);
-  printf("v from std_dec_aptxQuantizeBank: %d\n", v);
   v = pcmClipValue(v);
   std_encdec_10002A1F(aptxQuantizer->pcm2, aptxQuantizer, windowLength);
   std_encdec_10002C26(v, aptxQuantizer->pcm2, aptxQuantizer, windowLength);
+  printf("return from std_dec_aptxQuantizeBank: %d\n", aptxQuantizer->m_08[1]);
   return aptxQuantizer->m_08[1];
 }
 
