@@ -239,6 +239,7 @@ void aptxQMF34(double dst[2], float flt[34], float src[34]) {
 double aptxQMF32(float flt[32], float src[32]) {
   double dst{ 0.0 };
   for (auto i = 0; i < 32; i += 2) {
+    printf("flt: %lf, src: %lf\n", flt[30 - i], src[30 - i]);
     dst += flt[30 - i] * src[30 - i];
   }
   return dst;
@@ -592,16 +593,16 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   }
   double v;
   v = aptxQMF32(&QMF32_FLT[32 + 0 - aptxChannel->qmf32idx], &aptxChannel->qmf32B[0]);
-  printf("v: %lf\n", v);
+  //printf("v: %lf\n", v);
   pcm4[0] = aptxDoubleToIntStd(2 * v);
   v = aptxQMF32(&QMF32_FLT[32 + 1 - aptxChannel->qmf32idx], &aptxChannel->qmf32B[1]);
-  printf("v: %lf\n", v);
+  //printf("v: %lf\n", v);
   pcm4[1] = aptxDoubleToIntStd(2 * v);
   v = aptxQMF32(&QMF32_FLT[32 + 0 - aptxChannel->qmf32idx], &aptxChannel->qmf32A[0]);
-  printf("v: %lf\n", v);
+  //printf("v: %lf\n", v);
   pcm4[2] = aptxDoubleToIntStd(2 * v);
   v = aptxQMF32(&QMF32_FLT[32 + 1 - aptxChannel->qmf32idx], &aptxChannel->qmf32A[1]);
-  printf("v: %lf\n", v);
+  //printf("v: %lf\n", v);
   pcm4[3] = aptxDoubleToIntStd(2 * v);
 
   aptxChannel->qmf34A[aptxChannel->qmf34idx + 0] = (float)pcmClipValue(pcm4[1] + pcm4[3]);
