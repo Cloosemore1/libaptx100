@@ -584,17 +584,10 @@ void std_aptxChannelDecode(aptxChannel_t* aptxChannel, int pcm4[4], unsigned sho
 
 void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   double qmf34A[2], qmf34B[2];
-  for (int i = 0; i < 4; i++) {
-    printf("pcm4[%d]: %d\n", i, pcm4[i]);
-  }
   aptxChannel->qmf32B[aptxChannel->qmf32idx + 0] = (float)pcmClipValue(pcm4[0] + pcm4[1]);
   aptxChannel->qmf32B[aptxChannel->qmf32idx + 1] = (float)pcmClipValue(pcm4[0] - pcm4[1]);
   aptxChannel->qmf32A[aptxChannel->qmf32idx + 0] = (float)pcmClipValue(pcm4[2] + pcm4[3]);
   aptxChannel->qmf32A[aptxChannel->qmf32idx + 1] = (float)pcmClipValue(pcm4[2] - pcm4[3]);
-  printf("qmf32b: %lf\n", aptxChannel->qmf32B[aptxChannel->qmf32idx + 0]);
-  printf("qmf32b: %lf\n", aptxChannel->qmf32B[aptxChannel->qmf32idx + 1]);
-  printf("qmf32a: %lf\n", aptxChannel->qmf32A[aptxChannel->qmf32idx + 0]);
-  printf("qmf32a: %lf\n", aptxChannel->qmf32A[aptxChannel->qmf32idx + 1]);
 
   aptxChannel->qmf32idx += 2;
   if (aptxChannel->qmf32idx >= 32) {
@@ -602,16 +595,12 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
   }
   double v;
   v = aptxQMF32(&QMF32_FLT[32 + 0 - aptxChannel->qmf32idx], &aptxChannel->qmf32B[0]);
-  //printf("v: %lf\n", v);
   pcm4[0] = aptxDoubleToIntStd(2 * v);
   v = aptxQMF32(&QMF32_FLT[32 + 1 - aptxChannel->qmf32idx], &aptxChannel->qmf32B[1]);
-  //printf("v: %lf\n", v);
   pcm4[1] = aptxDoubleToIntStd(2 * v);
   v = aptxQMF32(&QMF32_FLT[32 + 0 - aptxChannel->qmf32idx], &aptxChannel->qmf32A[0]);
-  //printf("v: %lf\n", v);
   pcm4[2] = aptxDoubleToIntStd(2 * v);
   v = aptxQMF32(&QMF32_FLT[32 + 1 - aptxChannel->qmf32idx], &aptxChannel->qmf32A[1]);
-  //printf("v: %lf\n", v);
   pcm4[3] = aptxDoubleToIntStd(2 * v);
 
   aptxChannel->qmf34A[aptxChannel->qmf34idx + 0] = (float)pcmClipValue(pcm4[1] + pcm4[3]);
@@ -633,6 +622,7 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
 int std_dec_aptxQuantizeBank(aptxQuantizer_t* aptxQuantizer, int aptxVal, int allocBits, int maxScale, int outShift, int windowLength) {
   //printf("subband value: %x\n", aptxVal);
   auto v = std_encdec_100028F1(aptxQuantizer->scale2, &QTZ_TABLE[allocBits], aptxVal, maxScale, outShift);
+  printf("v from std_dec_aptxQuantizeBank: %d\n", v);
   v = pcmClipValue(v);
   std_encdec_10002A1F(aptxQuantizer->pcm2, aptxQuantizer, windowLength);
   std_encdec_10002C26(v, aptxQuantizer->pcm2, aptxQuantizer, windowLength);
