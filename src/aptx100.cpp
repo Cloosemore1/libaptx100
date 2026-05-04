@@ -6,8 +6,6 @@
 #include <cstdint>
 #include <cstdio>
 
-static_assert(sizeof(int) == 4);
-
 auto pcmClipValue = [](auto v) {
   if (v >= -32768) {
     if (v > 32767) {
@@ -17,32 +15,12 @@ auto pcmClipValue = [](auto v) {
   else {
     v = -32768;
   }
-  //printf("PCM clip value: %d\n", v);
   return v;
 };
-
-bool aptxAutoAux(aptxCtx_t* aptxCtx, bool mode_bit_3) {
-  if (mode_bit_3) {
-    aptxCtx->mode |= APTX_MODE::USE_AUTO_AUX;
-    if (aptxCtx->m_08 < 3) {
-      ++aptxCtx->m_08;
-    }
-  }
-  else {
-    aptxCtx->mode &= ~APTX_MODE::USE_AUTO_AUX;
-    if (aptxCtx->m_08 > -4) {
-      --aptxCtx->m_08;
-    }
-  }
-  return aptxCtx->m_08 >= 0;
-}
 
 void aptxInitialize(aptxCtx_t* aptxCtx, unsigned int mode, int buffers, int* channel_mode, int channels) {
   if (aptxCtx) {
     auto aptxData = aptxCtx->aptxData;
-    if (use_mmx()) {              // Is MMX allowed?
-      mode |= APTX_MODE::USE_MMX;
-    }
     aptxCtx->mode = mode;
     aptxCtx->buffers = buffers;
     aptxCtx->m_08 = -3;
@@ -63,26 +41,14 @@ void aptxInitialize(aptxCtx_t* aptxCtx, unsigned int mode, int buffers, int* cha
     memset(aptxCtx->aptxChannel, 0, channels * sizeof(aptxChannel_t));
     for (auto ch = 0; ch < channels; ++ch) {
       aptxCtx->aptxChannel[ch].mode = channel_mode ? channel_mode[ch] : 0;
-      if (!(mode & APTX_MODE::USE_MMX)) {
-        LOBYTE(aptxCtx->aptxChannel[ch].quantizer[0].m_08[0]) = 1;
-        HIBYTE(aptxCtx->aptxChannel[ch].quantizer[0].m_08[0]) = 1;
-        LOBYTE(aptxCtx->aptxChannel[ch].quantizer[1].m_08[0]) = 1;
-        HIBYTE(aptxCtx->aptxChannel[ch].quantizer[1].m_08[0]) = 1;
-        LOBYTE(aptxCtx->aptxChannel[ch].quantizer[2].m_08[0]) = 1;
-        HIBYTE(aptxCtx->aptxChannel[ch].quantizer[2].m_08[0]) = 1;
-        LOBYTE(aptxCtx->aptxChannel[ch].quantizer[3].m_08[0]) = 1;
-        HIBYTE(aptxCtx->aptxChannel[ch].quantizer[3].m_08[0]) = 1;
-      }
-      else {
-        LOWORD(aptxCtx->aptxChannel[ch].qmf32A[0]) = 1;
-        HIWORD(aptxCtx->aptxChannel[ch].qmf32A[0]) = 1;
-        LOWORD(aptxCtx->aptxChannel[ch].qmf32A[1]) = 1;
-        HIWORD(aptxCtx->aptxChannel[ch].qmf32A[1]) = 1;
-        LOWORD(aptxCtx->aptxChannel[ch].qmf32A[2]) = 1;
-        HIWORD(aptxCtx->aptxChannel[ch].qmf32A[2]) = 1;
-        LOWORD(aptxCtx->aptxChannel[ch].qmf32A[3]) = 1;
-        HIWORD(aptxCtx->aptxChannel[ch].qmf32A[3]) = 1;
-      }
+      LOWORD(aptxCtx->aptxChannel[ch].qmf32A[0]) = 1;
+      HIWORD(aptxCtx->aptxChannel[ch].qmf32A[0]) = 1;
+      LOWORD(aptxCtx->aptxChannel[ch].qmf32A[1]) = 1;
+      HIWORD(aptxCtx->aptxChannel[ch].qmf32A[1]) = 1;
+      LOWORD(aptxCtx->aptxChannel[ch].qmf32A[2]) = 1;
+      HIWORD(aptxCtx->aptxChannel[ch].qmf32A[2]) = 1;
+      LOWORD(aptxCtx->aptxChannel[ch].qmf32A[3]) = 1;
+      HIWORD(aptxCtx->aptxChannel[ch].qmf32A[3]) = 1;
     }
   }
 }
@@ -123,107 +89,6 @@ int aptxDecode(aptxCtx_t* aptxCtx, int unused, int samples, bool mode_pcm_msb, s
   return aptxDec(aptxCtx, samples, pcmBuf, aptxBuf, nullptr);
 }
 
-void aptxEncInit(aptxCtx_t* aptxCtx, int channels) {
-  aptxCtx->aptxData = nullptr;
-  aptxInitialize(aptxCtx, APTX_MODE::ENCODE, -1, nullptr, channels);
-}
-
-int aptxEncode(aptxCtx_t* aptxCtx, int unused, int samples, bool mode_mcm_msb, short* pcmBuf, bool mode_aptx_msb, unsigned short* aptxBuf) {
-  aptxCtx->mode = (mode_aptx_msb ? APTX_MODE::USE_APTX_MSB : 0) | (mode_mcm_msb ? APTX_MODE::USE_PCM_MSB : 0) | (aptxCtx->mode & 0xfffffff9);
-  return aptxEnc(aptxCtx, samples, pcmBuf, aptxBuf, nullptr);
-}
-
-int aptxEnc(aptxCtx_t* aptxCtx, int samples, short* pcmBuf, unsigned short* aptxBuf, unsigned char** channel_status) {
-  int pcm4[4];
-  int bitcorr_ch1, bitcorr_ch3;
-  unsigned short aptxVal;
-  auto channels = aptxCtx->channels;
-  auto use_buffers = aptxCtx->buffers >= 0;
-  for (auto ch = 0; ch < channels; ++ch) {
-    if (samples != 512 && (use_buffers || aptxCtx->aptxChannel[ch].mode)) {
-      return 2;
-    }
-    bitcorr_ch3 = 0;
-    if ((aptxCtx->aptxChannel[ch].mode == 1) || (aptxCtx->aptxChannel[ch].mode == 2 && aptxCtx->m_08 >= 0)) {
-      bitcorr_ch3 = 1;
-    }
-    bitcorr_ch1 = use_buffers;
-    for (auto n = 0; n < samples >> 2; ++n) {
-      if (aptxCtx->mode & APTX_MODE::USE_PCM_MSB) {
-        pcm4[0] = (SLOBYTE(pcmBuf[4 * channels * n + 0 * channels + ch]) << 8) + (pcmBuf[4 * channels * n + 0 * channels + ch] >> 8);
-        pcm4[1] = (SLOBYTE(pcmBuf[4 * channels * n + 1 * channels + ch]) << 8) + (pcmBuf[4 * channels * n + 1 * channels + ch] >> 8);
-        pcm4[2] = (SLOBYTE(pcmBuf[4 * channels * n + 2 * channels + ch]) << 8) + (pcmBuf[4 * channels * n + 2 * channels + ch] >> 8);
-        pcm4[3] = (SLOBYTE(pcmBuf[4 * channels * n + 3 * channels + ch]) << 8) + (pcmBuf[4 * channels * n + 3 * channels + ch] >> 8);
-      }
-      else {
-        pcm4[0] = pcmBuf[4 * channels * n + 0 * channels + ch];
-        pcm4[1] = pcmBuf[4 * channels * n + 1 * channels + ch];
-        pcm4[2] = pcmBuf[4 * channels * n + 2 * channels + ch];
-        pcm4[3] = pcmBuf[4 * channels * n + 3 * channels + ch];
-      }
-      if (aptxCtx->mode & APTX_MODE::USE_MMX) {
-        aptxVal = mmx_aptxChannelEncode(&aptxCtx->aptxChannel[ch], pcm4, bitcorr_ch1, bitcorr_ch3);
-      }
-      else {
-        aptxVal = std_aptxChannelEncode(&aptxCtx->aptxChannel[ch], pcm4, bitcorr_ch1, bitcorr_ch3);
-      }
-      if (aptxCtx->mode & APTX_MODE::USE_APTX_MSB) {
-        aptxVal = (aptxVal << 8) | (aptxVal >> 8);
-      }
-      aptxBuf[channels * n + ch] = aptxVal;
-      bitcorr_ch1 = 0;
-      if (use_buffers) {
-        bitcorr_ch1 = n >= 117;
-      }
-    }
-    if (bitcorr_ch3 > 0 && channel_status && channel_status[ch]) {
-      enc_100031AF(aptxCtx, &aptxBuf[ch], channel_status[ch]);
-    }
-    use_buffers = false;
-  }
-  enc_10003101(aptxCtx, aptxBuf);
-  return 0;
-}
-
-unsigned short std_aptxChannelEncode(aptxChannel_t* aptxChannel, int pcm4[4], int bitcorr_ch1, int bitcorr_ch3) {
-  std_enc_aptxQMF(aptxChannel, pcm4);
-  pcm4[0] = std_enc_aptxQuantizeBank(&aptxChannel->quantizer[0], pcm4[0], 7, 2816, 1, 4);
-  pcm4[1] = std_enc_aptxQuantizeBank(&aptxChannel->quantizer[1], pcm4[1], 4 - bitcorr_ch1, 3328, 1, 2) << bitcorr_ch1;
-  pcm4[2] = std_enc_aptxQuantizeBank(&aptxChannel->quantizer[2], pcm4[2], 2, 3584, 0, 1);
-  pcm4[3] = std_enc_aptxQuantizeBank(&aptxChannel->quantizer[3], pcm4[3], 3 - bitcorr_ch3, 3584, 0, 2) << bitcorr_ch3;
-  return (pcm4[0] << 0) | (pcm4[1] << 7) | (pcm4[2] << (7 + 4)) | (pcm4[3] << (7 + 4 + 2));
-}
-
-void std_enc_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
-  double qmf32A[2], qmf32B[2];
-  aptxChannel->qmf34A[aptxChannel->qmf34idx + 0] = (float)pcm4[0];
-  aptxChannel->qmf34B[aptxChannel->qmf34idx + 0] = (float)pcm4[1];
-  aptxChannel->qmf34A[aptxChannel->qmf34idx + 1] = (float)pcm4[2];
-  aptxChannel->qmf34B[aptxChannel->qmf34idx + 1] = (float)pcm4[3];
-  aptxChannel->qmf34idx += 2;
-  if (aptxChannel->qmf34idx >= 34) {
-    aptxChannel->qmf34idx = 0;
-  }
-  aptxQMF34(qmf32B, &QMF34_FLT_0[34 - 2 - aptxChannel->qmf34idx], aptxChannel->qmf34A);
-  aptxQMF34(qmf32A, &QMF34_FLT_1[34 - 2 - aptxChannel->qmf34idx], aptxChannel->qmf34B);
-  aptxChannel->qmf32B[aptxChannel->qmf32idx + 0] = (float)aptxDoubleToIntStd(qmf32A[0] + qmf32B[0]);
-  aptxChannel->qmf32A[aptxChannel->qmf32idx + 0] = (float)aptxDoubleToIntSym(qmf32A[0] - qmf32B[0]);
-  aptxChannel->qmf32B[aptxChannel->qmf32idx + 1] = (float)aptxDoubleToIntStd(qmf32A[1] + qmf32B[1]);
-  aptxChannel->qmf32A[aptxChannel->qmf32idx + 1] = (float)aptxDoubleToIntSym(qmf32A[1] - qmf32B[1]);
-  aptxChannel->qmf32idx += 2;
-  if (aptxChannel->qmf32idx >= 32) {
-    aptxChannel->qmf32idx = 0;
-  }
-  qmf32B[0] = aptxQMF32(&QMF32_FLT[32 + 0 - aptxChannel->qmf32idx], &aptxChannel->qmf32B[0]);
-  qmf32B[1] = aptxQMF32(&QMF32_FLT[32 + 1 - aptxChannel->qmf32idx], &aptxChannel->qmf32B[1]);
-  qmf32A[0] = aptxQMF32(&QMF32_FLT[32 + 0 - aptxChannel->qmf32idx], &aptxChannel->qmf32A[0]);
-  qmf32A[1] = aptxQMF32(&QMF32_FLT[32 + 1 - aptxChannel->qmf32idx], &aptxChannel->qmf32A[1]);
-  pcm4[0] = aptxDoubleToIntStd(qmf32B[1] + qmf32B[0]);
-  pcm4[1] = aptxDoubleToIntSym(qmf32B[1] - qmf32B[0]);
-  pcm4[2] = aptxDoubleToIntStd(qmf32A[1] + qmf32A[0]);
-  pcm4[3] = aptxDoubleToIntSym(qmf32A[1] - qmf32A[0]);
-}
-
 void aptxQMF34(double dst[2], float flt[34], float src[34]) {
   auto sum0{ 0.0 };
   for (auto i = 0; i < 34; i++) {
@@ -240,7 +105,6 @@ void aptxQMF34(double dst[2], float flt[34], float src[34]) {
 double aptxQMF32(float flt[32], float src[32]) {
   double dst{ 0.0 };
   for (auto i = 0; i < 32; i += 2) {
-    //printf("flt: %lf, src: %lf\n", flt[30 - i], src[30 - i]);
     dst += flt[30 - i] * src[30 - i];
   }
   return dst;
@@ -254,30 +118,6 @@ int aptxDoubleToIntStd(double value) {
     return ((int)value + 32768) >> 16;
   }
   return -32768;
-}
-
-int aptxDoubleToIntSym(double value) {
-  if (value >= 2147418112.0) {
-    return 32767;
-  }
-  if (value > -2147418112.0) {
-    return ((int)value + 32767) >> 16;
-  }
-  return -32767;
-}
-
-int std_enc_aptxQuantizeBank(aptxQuantizer_t* aptxQuantizer, int pcmVal, int allocBits, int maxScale, int outShift, int windowLength) {
-  int clpVal;
-  int outSgn;
-  int outVal;
-  std_encdec_10002A1F(aptxQuantizer->pcm2, aptxQuantizer, windowLength);
-  clpVal = pcmClipValue(pcmVal - aptxQuantizer->pcm2[1]);
-  outSgn = (clpVal >= 0) ? 0 : 1 << (allocBits - 1);
-  outVal = std_enc_10003054(QTZ_TABLE[allocBits].table2, allocBits - 2, abs(clpVal), aptxQuantizer->scale2[1]);
-  clpVal = std_encdec_100028F1(aptxQuantizer->scale2, &QTZ_TABLE[allocBits], outSgn | outVal, maxScale, outShift);
-  clpVal = pcmClipValue(clpVal);
-  std_encdec_10002C26(clpVal, aptxQuantizer->pcm2, aptxQuantizer, windowLength);
-  return outSgn | outVal;
 }
 
 int std_encdec_100028F1(int scale2[2], aptxQuantizationTable_t* qtz_entry, int pcmVal, int maxScale, int outShift) {
@@ -334,8 +174,6 @@ void std_encdec_10002A1F(int pcm2[2], aptxQuantizer_t* aptxQuantizer, int window
     aptxQuantizer->m_10[i + 24] = aptxQuantizer->m_10[i + 24 - 1];
   }
   pcm2[1] = pcmClipValue(pcmVal + pcm2[0]);
-  printf("pcm2[0] from std_encdec+10002A1F: %d\n", pcm2[0]);
-  printf("pcm2[0] from std_encdec+10002A1F: %d\n", pcm2[0]);
 }
 
 void std_encdec_10002C26(int pcmVal, int pcm2[2], aptxQuantizer_t* aptxQuantizer, int windowLength) {
@@ -434,59 +272,6 @@ void std_encdec_10002C26(int pcmVal, int pcm2[2], aptxQuantizer_t* aptxQuantizer
   }
 }
 
-int std_enc_10003054(short* qtz_data, int bits, int absVal, int scale) {
-  int delta;
-  auto sclVal = absVal << 14;
-  auto bitMsk = 1 << bits;
-  auto qtz_ref = &qtz_data[(1 << bits) - 1];
-  for (auto i = 0; i < bits; ++i) {
-    bitMsk >>= 1;
-    delta = (sclVal - qtz_ref[0] * scale) >> 31;
-    qtz_ref += (bitMsk ^ delta) - delta;
-  }
-  delta = (sclVal - qtz_ref[0] * scale) >> 31;
-  return (int)(&qtz_ref[delta + 1] - qtz_data);
-}
-
-void enc_10003101(aptxCtx_t* aptxCtx, unsigned short* aptxBuf) {
-  int v2; // [esp+0h] [ebp-10h]
-  int v3; // [esp+4h] [ebp-Ch]
-  unsigned char* v5; // [esp+Ch] [ebp-4h]
-  unsigned char* v6; // [esp+Ch] [ebp-4h]
-
-  if (aptxCtx->buffers >= 0) {
-    v2 = ENC_IDX_1000F56C[aptxCtx->buffers] << 7;
-    v5 = (unsigned char*)aptxBuf + (aptxCtx->mode & APTX_MODE::USE_APTX_MSB ? 1 : 0);
-    v3 = 2 * aptxCtx->channels;
-    if (aptxCtx->mode & APTX_MODE::USE_AUTO_AUX) {
-      *v5 |= 0x80u;
-    }
-    v6 = &v5[127 * v3];
-    for (auto i = 0; i < 10; ++i) {
-      *v6 |= v2 & 0x80;
-      v6 -= v3;
-      v2 >>= 1;
-    }
-  }
-}
-
-void enc_100031AF(aptxCtx_t* aptxCtx, unsigned short* aptxBuf, unsigned char* channel_status) {
-  int v3; // [esp+0h] [ebp-14h]
-  int v5; // [esp+8h] [ebp-Ch]
-  unsigned char* v6; // [esp+Ch] [ebp-8h]
-
-  v5 = 2 * aptxCtx->channels;
-  v6 = (unsigned char*)&aptxBuf[127 * aptxCtx->channels] + (aptxCtx->mode & APTX_MODE::USE_PCM_MSB ? 1 : 0);
-  for (auto i = 15; i >= 0; --i) {
-    v3 = 32 * (char)channel_status[i];
-    for (auto j = 0; j < 8; ++j) {
-      *v6 |= v3 & 0x20;
-      v6 -= v5;
-      v3 >>= 1;
-    }
-  }
-}
-
 int aptxDec(aptxCtx_t* aptxCtx, int samples, short* pcmBuf, unsigned short* aptxBuf, unsigned char** channel_status) {
   int v18; // [esp+3Ch] [ebp-28h]
   int v22; // [esp+50h] [ebp-14h]
@@ -551,12 +336,7 @@ int aptxDec(aptxCtx_t* aptxCtx, int samples, short* pcmBuf, unsigned short* aptx
         aptxVal = (aptxVal << 8) | (aptxVal >> 8);
       }
       aptxVal = (unsigned int)(__PAIR64__(aptxCtx->m_0c, (aptxVal << 16) >> v22)) >> 16;
-      if (aptxCtx->mode & APTX_MODE::USE_MMX) {
-        mmx_aptxChannelDecode(&aptxCtx->aptxChannel[ch], pcm4, aptxVal, bitcorr_ch1, bitcorr_ch3[ch]);
-      }
-      else {
-        std_aptxChannelDecode(&aptxCtx->aptxChannel[ch], pcm4, aptxVal, bitcorr_ch1, bitcorr_ch3[ch]);
-      }
+      std_aptxChannelDecode(&aptxCtx->aptxChannel[ch], pcm4, aptxVal, bitcorr_ch1, bitcorr_ch3[ch]);
       if (aptxCtx->mode & APTX_MODE::USE_PCM_MSB) {
         pcmBuf[4 * channels * n + 0 * channels + ch] = (SLOBYTE(pcm4[0]) << 8) | (SHIBYTE(pcm4[0]) >> 8);
         pcmBuf[4 * channels * n + 1 * channels + ch] = (SLOBYTE(pcm4[1]) << 8) | (SHIBYTE(pcm4[1]) >> 8);
@@ -620,12 +400,13 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
 }
 
 int std_dec_aptxQuantizeBank(aptxQuantizer_t* aptxQuantizer, int aptxVal, int allocBits, int maxScale, int outShift, int windowLength) {
-  //printf("subband value: %x\n", aptxVal);
+  //compute the inverse quantized difference signal
   auto v = std_encdec_100028F1(aptxQuantizer->scale2, &QTZ_TABLE[allocBits], aptxVal, maxScale, outShift);
   v = pcmClipValue(v);
+  printf("inverse quantized difference signal: %d\n", v);
   std_encdec_10002A1F(aptxQuantizer->pcm2, aptxQuantizer, windowLength);
   std_encdec_10002C26(v, aptxQuantizer->pcm2, aptxQuantizer, windowLength);
-  printf("return from std_dec_aptxQuantizeBank: %d\n", aptxQuantizer->m_08[1]);
+  printf("complete subband sample: %d\n", aptxQuantizer->m_08[1]);
   return aptxQuantizer->m_08[1];
 }
 

@@ -7,7 +7,7 @@ DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 ODIR = obj
 
-_OBJ = aptx100.o libaptx100.o mmx.o qmf.o
+_OBJ = aptx100.o libaptx100.o qmf.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: src/%.cpp $(DEPS)
