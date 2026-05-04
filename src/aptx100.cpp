@@ -157,6 +157,8 @@ int std_encdec_100028F1(int scale2[2], aptxQuantizationTable_t* qtz_entry, int p
 }
 
 void std_encdec_10002A1F(int pcm2[2], aptxQuantizer_t* aptxQuantizer, int windowLength) {
+  printf("aptxQuantizer->m_00[0]: %d, aptxQuantizer->m_08[1]: %d, aptxQuantizer->m_00[1]: %d, aptxQuantizer->m_08[2]: %d\n", 
+  aptxQuantizer->m_00[0], aptxQuantizer->m_08[1], aptxQuantizer->m_00[1], aptxQuantizer->m_08[2]);
   auto pcmVal = pcmClipValue((aptxQuantizer->m_00[0] * aptxQuantizer->m_08[1] + aptxQuantizer->m_00[1] * aptxQuantizer->m_08[2] + 8192) >> 14);
   printf("pcmVal @ 10002A1F: %d\n", pcmVal);
   aptxQuantizer->m_08[2] = aptxQuantizer->m_08[1];
