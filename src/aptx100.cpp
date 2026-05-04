@@ -158,7 +158,9 @@ int std_encdec_100028F1(int scale2[2], aptxQuantizationTable_t* qtz_entry, int p
 
 void std_encdec_10002A1F(int pcm2[2], aptxQuantizer_t* aptxQuantizer, int windowLength) {
   auto pcmVal = pcmClipValue((aptxQuantizer->m_00[0] * aptxQuantizer->m_08[1] + aptxQuantizer->m_00[1] * aptxQuantizer->m_08[2] + 8192) >> 14);
+  printf("pcmVal @ 10002A1F: %d\n", pcmVal);
   aptxQuantizer->m_08[2] = aptxQuantizer->m_08[1];
+  printf("aptxQuantizer->m_08[2] @ 10002A1F: %d\n", aptxQuantizer->m_08[2]);
   auto sum{ 0.0 };
   for (auto i = 0; i < windowLength; ++i) {
     sum +=
@@ -170,10 +172,12 @@ void std_encdec_10002A1F(int pcm2[2], aptxQuantizer_t* aptxQuantizer, int window
       aptxQuantizer->m_10[6 * i + 24 + 0] * aptxQuantizer->m_10[6 * i + 0];
   }
   pcm2[0] = aptxDoubleToIntStd(sum * 4.0);
+  printf("pcm2[0] @ 10002A1F: %d\n", pcm2[0]);
   for (auto i = 6 * windowLength; i > 0; --i) {
     aptxQuantizer->m_10[i + 24] = aptxQuantizer->m_10[i + 24 - 1];
   }
   pcm2[1] = pcmClipValue(pcmVal + pcm2[0]);
+  printf("pcm2[1] @ 10002A1F: %d\n", pcm2[1]);
 }
 
 void std_encdec_10002C26(int pcmVal, int pcm2[2], aptxQuantizer_t* aptxQuantizer, int windowLength) {
