@@ -1,6 +1,6 @@
 #pragma once
 
-enum APTX_MODE { DECODE = 0, ENCODE = 1, USE_PCM_MSB = 2, USE_APTX_MSB = 4, USE_AUTO_AUX = 8, USE_MMX = 0x80000000 };
+enum APTX_MODE { DECODE = 0, ENCODE = 1, USE_PCM_MSB = 2, USE_APTX_MSB = 4 };
 
 constexpr int APTX_MAX_CHANNELS = 2;
 constexpr int APTX_DELAY_IN_SAMPLES = 122;
@@ -67,37 +67,22 @@ typedef struct _aptxCtx_t {
 	/* 0x0018 */ aptxChannel_t aptxChannel[APTX_MAX_CHANNELS]; // size = 1488 for channels
 } aptxCtx_t;
 
-bool use_mmx();
-
-bool aptxAutoAux(aptxCtx_t* aptxCtx, bool mode_bit_3);
-
-void aptxInitialize(aptxCtx_t* aptxCtx, unsigned int mode, int buffers, int* channel_mode, int channels);
+extern "C" void aptxInitialize(aptxCtx_t* aptxCtx, unsigned int mode, int buffers, int* channel_mode, int channels);
 extern "C" aptxCtx_t* aptxCreate(unsigned int mode, int buffers, int* channel_mode, int channels);
-void aptxDelete(aptxCtx_t* aptxCtx);
+extern "C" void aptxDelete(aptxCtx_t* aptxCtx);
 
 extern "C" void aptxDecInit(aptxCtx_t* aptxCtx, int channels);
 extern "C" int aptxDecode(aptxCtx_t* aptxCtx, int unused, int samples, bool mode_pcm_msb, short* pcmBuf, bool mode_aptx_msb, unsigned short* aptxBuf);
+
 int aptxDec(aptxCtx_t* aptxCtx, int samples, short* pcmBuf, unsigned short* aptxBuf, unsigned char** channel_status); 
 
-void aptxEncInit(aptxCtx_t* aptxCtx, int channels);
-int aptxEncode(aptxCtx_t* aptxCtx, int unused, int samples, bool mode_pcm_msb, short* pcmBuf, bool mode_aptx_msb, unsigned short* aptxBuf); 
-int aptxEnc(aptxCtx_t* aptxCtx, int samples, short* pcmBuf, unsigned short* aptxBuf, unsigned char** channel_status);
-
-unsigned short mmx_aptxChannelEncode(aptxChannel_t* aptxChannel, int pcm4[4], int bitcorr_ch1, int bitcorr_ch3);
-unsigned short std_aptxChannelEncode(aptxChannel_t* aptxChannel, int pcm4[4], int bitcorr_ch1, int bitcorr_ch3);
-void std_enc_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]);
 void aptxQMF34(double dst[2], float flt[34], float src[34]);
 double aptxQMF32(float flt[32], float src[32]);
 int aptxDoubleToIntStd(double value);
 int aptxDoubleToIntSym(double value);
-int std_enc_aptxQuantizeBank(aptxQuantizer_t* aptxQuantizer, int pcmVal, int allocBits, int maxScale, int outShift, int windowLength);
 int std_encdec_100028F1(int scale2[2], aptxQuantizationTable_t* qtz_entry, int pcmVal, int maxScale, int outShift);
 void std_encdec_10002A1F(int pcm2[2], aptxQuantizer_t* aptxQuantizer, int windowLength);
 void std_encdec_10002C26(int a1, int pcm2[2], aptxQuantizer_t* aptxQuantizer, int windowLength);
-int std_enc_10003054(short* qtz_data, int bits, int absVal, int scale);
-void enc_10003101(aptxCtx_t* aptxCtx, unsigned short* aptxBuf);
-void enc_100031AF(aptxCtx_t* aptxCtx, unsigned short* aptxBuf, unsigned char* channel_status);
-void mmx_aptxChannelDecode(aptxChannel_t* aptxChannel, int pcm4[4], unsigned short aptxVal, int bitcorr_ch1, int bitcorr_ch3);
 void std_aptxChannelDecode(aptxChannel_t* aptxChannel, int pcm4[4], unsigned short aptxVal, int bitcorr_ch1, int bitcorr_ch3);
 void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]);
 int std_dec_aptxQuantizeBank(aptxQuantizer_t* aptxQuantizer, int aptxVal, int allocBits, int maxScale, int outShift, int windowLength);

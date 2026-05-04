@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -I$(IDIR) -fPIC -frounding-math -fno-associative-math -fsanitize=undefined
+CFLAGS = -I$(IDIR) -fPIC
 IDIR = ./include
 
 _DEPS = aptx100.h defs.h libaptx100.h
@@ -7,12 +7,11 @@ DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 ODIR = obj
 
-_OBJ = aptx100.o libaptx100.o mmx.o qmf.o
+_OBJ = aptx100.o libaptx100.o qmf.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: src/%.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
-
 $(ODIR)/libaptx100.so: $(OBJ)
 	$(CC) -shared -o $@ $^ $(CFLAGS)
 
