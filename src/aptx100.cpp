@@ -6,6 +6,70 @@
 #include <cstdint>
 #include <cstdio>
 
+struct ByteProxy {
+    uint8_t* ptr;
+
+    operator uint8_t() const
+    {
+        return *ptr;
+    }
+
+    ByteProxy& operator=(uint8_t v)
+    {
+        *ptr = v;
+        return *this;
+    }
+};
+
+struct WordProxy {
+    uint8_t* ptr;
+
+    operator uint16_t() const
+    {
+        uint16_t v;
+        std::memcpy(&v, ptr, sizeof(v));
+        return v;
+    }
+
+    WordProxy& operator=(uint16_t v)
+    {
+        std::memcpy(ptr, &v, sizeof(v));
+        return *this;
+    }
+};
+
+struct DwordProxy {
+    uint8_t* ptr;
+
+    operator uint32_t() const
+    {
+        uint32_t v;
+        std::memcpy(&v, ptr, sizeof(v));
+        return v;
+    }
+
+    DwordProxy& operator=(uint32_t v)
+    {
+        std::memcpy(ptr, &v, sizeof(v));
+        return *this;
+    }
+};
+
+template <typename T>
+inline ByteProxy BYTE_AT(T& x, size_t i) {
+    return ByteProxy{ reinterpret_cast<uint8_t*>(&x) + i };
+}
+
+template <typename T>
+inline WordProxy WORD_AT(T& x, size_t i) {
+    return WordProxy{ reinterpret_cast<uint8_t*>(&x) + i };
+}
+
+template <typename T>
+inline DwordProxy DWORD_AT(T& x, size_t i) {
+    return DwordProxy{ reinterpret_cast<uint8_t*>(&x) + i };
+}
+
 auto pcmClipValue = [](auto v) {
   if (v >= -32768) {
     if (v > 32767) {
@@ -157,12 +221,8 @@ int std_encdec_100028F1(int scale2[2], aptxQuantizationTable_t* qtz_entry, int p
 }
 
 void std_encdec_10002A1F(int pcm2[2], aptxQuantizer_t* aptxQuantizer, int windowLength) {
-  printf("aptxQuantizer->m_00[0]: %d, aptxQuantizer->m_08[1]: %d, aptxQuantizer->m_00[1]: %d, aptxQuantizer->m_08[2]: %d\n", 
-  aptxQuantizer->m_00[0], aptxQuantizer->m_08[1], aptxQuantizer->m_00[1], aptxQuantizer->m_08[2]);
   auto pcmVal = pcmClipValue((aptxQuantizer->m_00[0] * aptxQuantizer->m_08[1] + aptxQuantizer->m_00[1] * aptxQuantizer->m_08[2] + 8192) >> 14);
-  printf("pcmVal @ 10002A1F: %d\n", pcmVal);
   aptxQuantizer->m_08[2] = aptxQuantizer->m_08[1];
-  printf("aptxQuantizer->m_08[2] @ 10002A1F: %d\n", aptxQuantizer->m_08[2]);
   auto sum{ 0.0 };
   for (auto i = 0; i < windowLength; ++i) {
     sum +=
@@ -174,12 +234,10 @@ void std_encdec_10002A1F(int pcm2[2], aptxQuantizer_t* aptxQuantizer, int window
       aptxQuantizer->m_10[6 * i + 24 + 0] * aptxQuantizer->m_10[6 * i + 0];
   }
   pcm2[0] = aptxDoubleToIntStd(sum * 4.0);
-  printf("pcm2[0] @ 10002A1F: %d\n", pcm2[0]);
   for (auto i = 6 * windowLength; i > 0; --i) {
     aptxQuantizer->m_10[i + 24] = aptxQuantizer->m_10[i + 24 - 1];
   }
   pcm2[1] = pcmClipValue(pcmVal + pcm2[0]);
-  printf("pcm2[1] @ 10002A1F: %d\n", pcm2[1]);
 }
 
 void std_encdec_10002C26(int pcmVal, int pcm2[2], aptxQuantizer_t* aptxQuantizer, int windowLength) {
@@ -406,13 +464,10 @@ void std_dec_aptxQMF(aptxChannel_t* aptxChannel, int pcm4[4]) {
 }
 
 int std_dec_aptxQuantizeBank(aptxQuantizer_t* aptxQuantizer, int aptxVal, int allocBits, int maxScale, int outShift, int windowLength) {
-  //compute the inverse quantized difference signal
   auto v = std_encdec_100028F1(aptxQuantizer->scale2, &QTZ_TABLE[allocBits], aptxVal, maxScale, outShift);
   v = pcmClipValue(v);
-  printf("inverse quantized difference signal: %d\n", v);
   std_encdec_10002A1F(aptxQuantizer->pcm2, aptxQuantizer, windowLength);
   std_encdec_10002C26(v, aptxQuantizer->pcm2, aptxQuantizer, windowLength);
-  printf("complete subband sample: %d\n", aptxQuantizer->m_08[1]);
   return aptxQuantizer->m_08[1];
 }
 

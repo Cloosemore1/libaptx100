@@ -1,6 +1,6 @@
 #pragma once
 
-enum APTX_MODE { DECODE = 0, ENCODE = 1, USE_PCM_MSB = 2, USE_APTX_MSB = 4, USE_AUTO_AUX = 8 };
+enum APTX_MODE { DECODE = 0, ENCODE = 1, USE_PCM_MSB = 2, USE_APTX_MSB = 4 };
 
 constexpr int APTX_MAX_CHANNELS = 2;
 constexpr int APTX_DELAY_IN_SAMPLES = 122;
@@ -67,12 +67,13 @@ typedef struct _aptxCtx_t {
 	/* 0x0018 */ aptxChannel_t aptxChannel[APTX_MAX_CHANNELS]; // size = 1488 for channels
 } aptxCtx_t;
 
-void aptxInitialize(aptxCtx_t* aptxCtx, unsigned int mode, int buffers, int* channel_mode, int channels);
+extern "C" void aptxInitialize(aptxCtx_t* aptxCtx, unsigned int mode, int buffers, int* channel_mode, int channels);
 extern "C" aptxCtx_t* aptxCreate(unsigned int mode, int buffers, int* channel_mode, int channels);
-void aptxDelete(aptxCtx_t* aptxCtx);
+extern "C" void aptxDelete(aptxCtx_t* aptxCtx);
 
 extern "C" void aptxDecInit(aptxCtx_t* aptxCtx, int channels);
 extern "C" int aptxDecode(aptxCtx_t* aptxCtx, int unused, int samples, bool mode_pcm_msb, short* pcmBuf, bool mode_aptx_msb, unsigned short* aptxBuf);
+
 int aptxDec(aptxCtx_t* aptxCtx, int samples, short* pcmBuf, unsigned short* aptxBuf, unsigned char** channel_status); 
 
 void aptxQMF34(double dst[2], float flt[34], float src[34]);
